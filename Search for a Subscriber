@@ -1,0 +1,16 @@
+<style>
+  .center {
+    text-align: center;
+  }
+</style>
+
+<div class="center">
+  <h1>Search for a Subscriber</h1>
+  <form action="https://mcg8b271x0w-vxzq8-9-782wyk4q.pub.sfmc-content.com/hs5dvbs3wrd" method="post">
+    <label for="subkey">Subscriber Key: </label>
+    <input type="text" id="subkey" name="SubscriberKey">
+    <br>
+    <br>
+    <input type="submit" value="Search">
+  </form>
+</div>
