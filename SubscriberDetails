@@ -1,0 +1,526 @@
+<style>
+  .center {
+    text-align: center;
+  }
+</style>
+
+<div class="center">
+  <h1>Search for a Subscriber</h1>
+  <form action="https://mcg8b271x0w-vxzq8-9-782wyk4q.pub.sfmc-content.com/hs5dvbs3wrd" method="post">
+    <label for="subkey">Subscriber Key: </label>
+    <input type="text" id="subkey" name="SubscriberKey">
+    <br>
+    <br>
+    <input type="submit" value="Search">
+  </form>
+</div>
+
+______________________________________________________________
+
+
+<style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px;
+  }
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+</style>
+<h2>Subscriber Details
+</h2>
+<table>
+  %%[
+    /*Declare Variables*/
+    var @SubscriberKey,@Sends,@Opens, @Clicks,@Bounces, @Lists
+    /*Get Subscriber in content from url*/
+    Set @SubscriberKey = RequestParameter("SubscriberKey")
+    
+]%%
+  <script runat="server">
+    Platform.Load("Core","1.1.1");
+    try{
+      //Get subscriberKey retrived by AMPscript from URL parameter
+      var SubscriberKey= Variable.GetValue("@SubscriberKey");
+
+      //Set filter for retrieval of tracking data
+      var filter = {
+        Property: "SubscriberKey", 
+        SimpleOperator: "equals", 
+        Value: SubscriberKey
+      };
+      //Set columns to retrieve
+      var cols = ["SubscriberKey","EmailAddress","Status","UnsubscribedDate","EmailTypePreference","CreatedDate"];
+      //Logic for send count begins
+      //Initiate WSProxy and set object properties
+      var subprox = new Script.Util.WSProxy(),
+          objectType = "Subscriber",
+          moreData = false,
+          reqID = null,
+          numItems = 0;
+      //Get subscriber details
+      var subdata = subprox.retrieve(objectType, cols, filter);
+      if(subdata != null) {
+        for(var i=0; i< subdata.Results.length; i++) {
+          Write("<tr>");
+          Write("<td>" + "SubscriberKey" + "</td>");
+          Write("<td>" + subdata.Results[i].SubscriberKey + "</td>");
+          Write("</tr>");
+          Write("<tr>");
+          Write("<td>" + "EmailAddress" + "</td>");
+          Write("<td>" + subdata.Results[i].EmailAddress + "</td>");
+          Write("</tr>");
+          Write("<tr>");
+          Write("<td>" + "Status" + "</td>");
+          Write("<td>" + subdata.Results[i].Status + "</td>");
+          Write("</tr>");
+          Write("<tr>");
+          Write("<td>" + "UnsubscribedDate" + "</td>");
+          Write("<td>" + subdata.Results[i].UnsubscribedDate + "</td>");
+          Write("</tr>");
+          Write("<tr>");
+          Write("<td>" + "EmailTypePreference" + "</td>");
+          Write("<td>" + subdata.Results[i].EmailTypePreference + "</td>");
+          Write("</tr>");
+          Write("<tr>");
+          Write("<td>" + "CreatedDate" + "</td>");
+          Write("<td>" + subdata.Results[i].CreatedDate + "</td>");
+          Write("</tr>");
+        }
+      }
+    }
+    catch(e){
+      Write(Stringify(e));
+    }
+  </script>
+</table>
+
+
+----------------------------------------------------------------------
+
+
+%%[
+    /*Declare Variables*/
+    var @SubscriberKey,@Sends,@Opens, @Clicks,@Bounces, @Lists
+    /*Get Subscriber in content from url*/
+    Set @SubscriberKey = RequestParameter("SubscriberKey")
+]%%
+<script runat="server">
+  Platform.Load("Core","1.1.1");
+  try{
+    //Get subscriberKey retrived by AMPscript from URL parameter
+    var SubscriberKey= Variable.GetValue("@SubscriberKey");
+    //Set filter for retrieval of tracking data
+    var filter = {
+      Property: "SubscriberKey", 
+      SimpleOperator: "equals", 
+      Value: SubscriberKey        
+    };
+    //<-------------------------------------------------------------------------------------------------------->
+    //Logic for send count begins
+    //Set columns to retrieve
+    var sendcols = ["SubscriberKey","EventDate"];
+    //Initiate WSProxy and set object properties
+    var sentprox = new Script.Util.WSProxy(),
+        objectType = "SentEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the sent count
+    var sentCount = 0;
+    while(moreData) {
+      moreData = false;
+      var sentdata = reqID == null ?
+          sentprox.retrieve(objectType, sendcols, filter):
+      sentprox.getNextBatch(objectType, reqID);
+      if(sentdata != null) {
+        moreData = sentdata.HasMoreRows;
+        reqID = sentdata.RequestID;
+        if(sentdata && sentdata.Results) {
+          sentCount = sentCount+sentdata.Results.length;
+        }
+      }
+    }
+    //end While more data
+    //Set the send count to AMPscript
+    Variable.SetValue("@Sends",sentCount);
+    //logic for sendcount ends
+    //<-------------------------------------------------------------------------------------------------->
+    //logic for opencount begins
+    //Set columns to retrieve
+    var opencols = ["SubscriberKey","EventDate"];
+    //Initiate WSProxy and set object properties
+    var openprox = new Script.Util.WSProxy(),
+        objectType = "openEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var openCount = 0;
+    while(moreData) {
+      moreData = false;
+      var opendata = reqID == null ?
+          openprox.retrieve(objectType, opencols, filter):
+      openprox.getNextBatch(objectType, reqID);
+      if(opendata != null) {
+        moreData = opendata.HasMoreRows;
+        reqID = opendata.RequestID;
+        if(opendata && opendata.Results) {
+          openCount = openCount+opendata.Results.length;
+        }
+      }
+    }
+    //end While more data
+    //Set the send count to AMPscript
+    Variable.SetValue("@Opens",openCount);
+    //End of logic for open count
+    //<-------------------------------------------------------------------------------------------------------------------->
+    //Logic for click count begins
+    //Set columns to retrieve
+    var clickcols = ["SubscriberKey","EventDate","URL"];
+    //Initiate WSProxy and set object properties
+    var clickprox = new Script.Util.WSProxy(),
+        objectType = "clickEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var clickCount = 0;
+    while(moreData) {
+      moreData = false;
+      var clickdata = reqID == null ?
+          clickprox.retrieve(objectType, clickcols, filter):
+      clickprox.getNextBatch(objectType, reqID);
+      if(clickdata != null) {
+        moreData = clickdata.HasMoreRows;
+        reqID = clickdata.RequestID;
+        if(clickdata && clickdata.Results) {
+          clickCount = clickCount+clickdata.Results.length;
+        }
+      }
+    }
+    //end While more data
+    //Set the send count to AMPscript
+    Variable.SetValue("@Clicks",clickCount);
+    //End of logic for Click count
+    //<-------------------------------------------------------------------------------------------------------------------------------->
+    //Logic for bounce count begins
+    //Set columns to retrieve
+    var bouncecols = ["SubscriberKey","EventDate","BounceType","BounceCategory"];
+    //Initiate WSProxy and set object properties
+    var bounceprox = new Script.Util.WSProxy(),
+        objectType = "bounceEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var bounceCount = 0;
+    while(moreData) {
+      moreData = false;
+      var bouncedata = reqID == null ?
+          bounceprox.retrieve(objectType, bouncecols, filter):
+      bounceprox.getNextBatch(objectType, reqID);
+      if(bouncedata != null) {
+        moreData = bouncedata.HasMoreRows;
+        reqID = bouncedata.RequestID;
+        if(bouncedata && bouncedata.Results) {
+          bounceCount = bounceCount+bouncedata.Results.length;
+        }
+      }
+    }
+    //end While more data
+    //Set the send count to AMPscript
+    Variable.SetValue("@Bounces",bounceCount);
+    //End of logic for bounce count
+    //<----------------------------------------------------------------------------------------------------------------------->
+  }
+  //end try
+  catch(e){
+    Write(Stringify(e));
+  }
+  //End catch
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<canvas id="bar-chart" width="300&quot;" height="150">
+</canvas>
+<div style="display:none;">
+  <p id="Sends">%%=v(@Sends)=%%</p>
+  <p id="Opens">%%=v(@Opens)=%%</p>
+  <p id="Clicks">%%=v(@Clicks)=%%</p>
+  <p id="Bounces">%%=v(@Bounces)=%%</p>
+</div>
+<script>
+  var Sends = document.getElementById("Sends").innerHTML;
+  var Opens = document.getElementById("Opens").innerHTML;
+  var Clicks = document.getElementById("Clicks").innerHTML;
+  var Bounces = document.getElementById("Bounces").innerHTML;
+  var data=[];
+  data[data.length] = Sends;
+  data[data.length] = Opens;
+  data[data.length] = Clicks;
+  data[data.length] = Bounces;
+  new Chart(document.getElementById("bar-chart"), {
+    type: 'bar',
+    data: {
+      labels: ["Sends","Opens","Clicks","Bounces"],
+      datasets: [
+        {
+          label: "",
+          backgroundColor: ["blue","purple","green","red"],
+          data: data
+        }
+      ]
+    }
+    ,
+    options: {
+      legend: {
+        display: false
+      }
+      ,
+      title: {
+        display: false,
+        text: ''
+      }
+      ,
+      // This chart will not respond to mousemove, etc
+      events: ['click'],
+      onClick: function(c,i) {
+        e = i[0];
+        var x_value = this.data.labels[e._index];
+        var y_value = this.data.datasets[0].data[e._index];
+        if(x_value == "Sends"){
+          if(document.getElementById("senddata") !=null){
+            document.getElementById("senddata").style.display = "";
+          }
+          if(document.getElementById("opendata") !=null){
+            document.getElementById("opendata").style.display = "none";
+          }
+          if(document.getElementById("clickdata") !=null){
+            document.getElementById("clickdata").style.display = "none";
+          }
+          if(document.getElementById("bouncedata") !=null){
+            document.getElementById("bouncedata").style.display = "none";
+          }
+        }
+        if(x_value == "Opens"){
+          if(document.getElementById("senddata") !=null){
+            document.getElementById("senddata").style.display = "none";
+          }
+          if(document.getElementById("opendata") !=null){
+            document.getElementById("opendata").style.display = "";
+          }
+          if(document.getElementById("clickdata") !=null){
+            document.getElementById("clickdata").style.display = "none";
+          }
+          if(document.getElementById("bouncedata") !=null){
+            document.getElementById("bouncedata").style.display = "none";
+          }
+        }
+        if(x_value == "Clicks"){
+          if(document.getElementById("senddata") !=null){
+            document.getElementById("senddata").style.display = "none";
+          }
+          if(document.getElementById("opendata") !=null){
+            document.getElementById("opendata").style.display = "none";
+          }
+          if(document.getElementById("clickdata") !=null){
+            document.getElementById("clickdata").style.display = "";
+          }
+          if(document.getElementById("bouncedata") !=null){
+            document.getElementById("bouncedata").style.display = "none";
+          }
+        }
+        if(x_value == "Bounces"){
+          if(document.getElementById("senddata") !=null){
+            document.getElementById("senddata").style.display = "none";
+          }
+          if(document.getElementById("opendata") !=null){
+            document.getElementById("opendata").style.display = "none";
+          }
+          if(document.getElementById("clickdata") !=null){
+            document.getElementById("clickdata").style.display = "none";
+          }
+          if(document.getElementById("bouncedata") !=null){
+            document.getElementById("bouncedata").style.display = "";
+          }
+        }
+      }
+      ,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero:true
+          }
+        }
+               ]
+      }
+    }
+  }
+           );
+</script>
+<h3>
+  Click on individual bars to see detailed data
+</h3>
+
+________________________________________________________________________
+
+
+%%[
+    /*Declare Variables*/
+    var @SubscriberKey,@Sends,@Opens, @Clicks,@Bounces, @Lists
+    /*Get Subscriber in content from url*/
+    Set @SubscriberKey = RequestParameter("SubscriberKey")
+]%%
+<script runat="server">
+  Platform.Load("Core","1.1.1");
+  try{
+    //Get subscriberKey retrived by AMPscript from URL parameter
+    var SubscriberKey= Variable.GetValue("@SubscriberKey");
+    //Set filter for retrieval of tracking data
+    var filter = {
+      Property: "SubscriberKey", 
+      SimpleOperator: "equals", 
+      Value: SubscriberKey
+    };
+    var sendcols = ["SubscriberKey","EventDate"];
+    //Initiate WSProxy and set object properties
+    var sentprox = new Script.Util.WSProxy(),
+        objectType = "sentEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the sent count
+    while(moreData) {
+      moreData = false;
+      var sentdata = reqID == null ?
+          sentprox.retrieve(objectType, sendcols, filter):
+      sentprox.getNextBatch(objectType, reqID);
+      if(sentdata != null) {
+        moreData = sentdata.HasMoreRows;
+        reqID = sentdata.RequestID;
+        if(sentdata && sentdata.Results) {
+          Write("<div id="+"\"senddata\""+"style="+"\"display:none;\""+"><table border=1 ><tr>");
+          Write("<th>" + "SubscriberKey" + "</th>");
+          Write("<th>" + "EventDate" + "</th>");
+          Write("</tr>");
+          for(var i=0; i< sentdata.Results.length; i++) {
+            Write("<tr>");
+            Write("<td>" + sentdata.Results[i].SubscriberKey + "</td>");
+            Write("<td>" + sentdata.Results[i].EventDate + "</td>");
+          }
+          Write("</tr></table></div>");
+        }
+      }
+    }
+    var opencols = ["SubscriberKey","EventDate"];
+    //Initiate WSProxy and set object properties
+    var openprox = new Script.Util.WSProxy(),
+        objectType = "openEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var openCount = 0;
+    while(moreData) {
+      moreData = false;
+      var opendata = reqID == null ?
+          openprox.retrieve(objectType, opencols, filter):
+      openprox.getNextBatch(objectType, reqID);
+      if(opendata != null) {
+        moreData = opendata.HasMoreRows;
+        reqID = opendata.RequestID;
+        if(opendata && opendata.Results) {
+          Write("<div id="+"\"opendata\""+"style="+"\"display:none;\""+"><table border=1 ><tr>");
+          Write("<th>" + "SubscriberKey" + "</th>");
+          Write("<th>" + "EventDate" + "</th>");
+          Write("</tr>");
+          for(var i=0; i< opendata.Results.length; i++) {
+            Write("<tr>");
+            Write("<td>" + opendata.Results[i].SubscriberKey + "</td>");
+            Write("<td>" + opendata.Results[i].EventDate + "</td>");
+          }
+          Write("</tr></table></div>");
+        }
+      }
+    }
+    //end While more data
+    var clickcols = ["SubscriberKey","EventDate","URL"];
+    //Initiate WSProxy and set object properties
+    var clickprox = new Script.Util.WSProxy(),
+        objectType = "clickEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var clickCount = 0;
+    while(moreData) {
+      moreData = false;
+      var clickdata = reqID == null ?
+          clickprox.retrieve(objectType, clickcols, filter):
+      clickprox.getNextBatch(objectType, reqID);
+      if(clickdata != null) {
+        moreData = clickdata.HasMoreRows;
+        reqID = clickdata.RequestID;
+        if(clickdata && clickdata.Results) {
+          Write("<div id="+"\"clickdata\""+"style="+"\"display:none;\""+"><table border=1 ><tr>");
+          Write("<th>" + "SubscriberKey" + "</th>");
+          Write("<th>" + "EventDate" + "</th>");
+          Write("<th>" + "URL" + "</th>");
+          Write("</tr>");
+          for(var i=0; i< clickdata.Results.length; i++) {
+            Write("<tr>");
+            Write("<td>" + clickdata.Results[i].SubscriberKey + "</td>");
+            Write("<td>" + clickdata.Results[i].EventDate + "</td>");
+            Write("<td>" + clickdata.Results[i].URL + "</td>");
+          }
+          Write("</tr></table></div>");
+        }
+      }
+    }
+    //end While more data
+    var bouncecols = ["SubscriberKey","EventDate","BounceType","BounceCategory"];
+    //Initiate WSProxy and set object properties
+    var bounceprox = new Script.Util.WSProxy(),
+        objectType = "bounceEvent",
+        moreData = true,
+        reqID = null,
+        numItems = 0;
+    //Retrieve data using pagination and set the open count 
+    var bounceCount = 0;
+    while(moreData) {
+      moreData = false;
+      var bouncedata = reqID == null ?
+          bounceprox.retrieve(objectType, bouncecols, filter):
+      bounceprox.getNextBatch(objectType, reqID);
+      if(bouncedata != null) {
+        moreData = bouncedata.HasMoreRows;
+        reqID = bouncedata.RequestID;
+        if(bouncedata && bouncedata.Results) {
+          Write("<div id="+"\"bouncedata\""+"style="+"\"display:none;\""+"><table border=1 ><tr>");
+          Write("<th>" + "SubscriberKey" + "</th>");
+          Write("<th>" + "EventDate" + "</th>");
+          Write("<th>" + "BounceType" + "</th>");
+          Write("<th>" + "BounceCategory" + "</th>");
+          Write("</tr>");
+          for(var i=0; i< bouncedata.Results.length; i++) {
+            Write("<tr>");
+            Write("<td>" + bouncedata.Results[i].SubscriberKey + "</td>");
+            Write("<td>" + bouncedata.Results[i].EventDate + "</td>");
+            Write("<td>" + bouncedata.Results[i].BounceType + "</td>");
+            Write("<td>" + bouncedata.Results[i].BounceCategory + "</td>");
+          }
+          Write("</tr></table></div>");
+        }
+      }
+    }
+    //end While more data
+  }
+  catch(e){
+    Write(Stringify(e));
+  }
+  //End catch
+</script>
